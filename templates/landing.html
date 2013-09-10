@@ -1,0 +1,81 @@
+{% if user.is_authenticated %}
+  <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title>Enter a payment</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+    <style>
+    /* Standard styles */
+    body{
+      background: url('/static/login_background.jpg') no-repeat center center fixed; 
+      background-size: cover;
+      font-family:Arial,Helvetica,sans-serif;
+    }
+    #welcome{
+      padding-top:15%;
+      font-size:50px;
+      font-weight:bold;
+      color:rgb(245, 245, 245);
+      margin:0 auto;
+      float:none !important;
+      text-align:center;
+    }
+    #subtitle,.info{
+      font-size:20px;
+      font-weight:bold;
+      color:rgb(245, 245, 245);
+    }
+    .info{
+      position:fixed;
+      top:10px;
+      right:10px;
+      font-size:15px;
+    }
+    input[type=text], textarea, input[type=submit]{
+      border:none;
+      margin-top:10px;
+      height:40px !important;
+    }
+    textarea{
+      height:40% !important;
+    }
+    input[type=text]:focus, textarea:focus{
+      border:#000 solid !important;
+    }
+    input[type=submit]:hover, input[type=submit]:focus{
+      border:#000 solid;
+    }
+    .row {
+      margin:0;
+    }
+    .submit{
+      width:100%;
+      margin:0;
+      margin-top:10px;
+    }
+    a{
+      color:rgb(245, 245, 245);
+    }
+    </style>
+  </head>
+  <body>
+    <span class="info">Hello, {{ user.username }}. <a href="/logout">Logout</a></span>
+    <div class="container">
+      <div id="welcome" class="col-md-5">
+        <a href="/payments" class="btn btn-success btn-lg submit">Enter a payment</a>
+        <a href="/create-house-account" class="btn btn-success btn-lg submit">Create a house account</a>
+      </div>
+    </div>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+    <script>
+    $(document).ready(function() {
+      $('#submit').tooltip('show');
+    });
+    </script>
+
+  </body>
+  </html>
+{% endif %}

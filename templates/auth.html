@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Log in</title>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
+  <style>
+  /* Standard styles */
+  body{
+    background: url('/static/login_background.jpg') no-repeat center center fixed; 
+    background-size: cover;
+    font-family:Arial,Helvetica,sans-serif;
+  }
+  #welcome{
+    padding-top:10%;
+    font-size:50px;
+    font-weight:bold;
+    color:rgb(245, 245, 245);
+    margin:0 auto;
+    float:none !important;
+    text-align:center;
+  }
+  #subtitle{
+    font-size:20px;
+    font-weight:bold;
+    color:rgb(245, 245, 245);
+  }
+  input[type=text], input[type=password], input[type=submit]{
+    border:none;
+    margin-top:10px;
+    height:40px !important;
+  }
+  input[type=text]:focus, input[type=password]:focus{
+    border:#000 solid;
+  }
+  input[type=submit]:hover,input[type=submit]:focus{
+    border:#000 solid;
+  }
+  .row {
+    margin:0;
+  }
+  #login, #join{
+    width:49.5%;
+    margin:0;
+    margin-top:10px;
+  }
+  #login{
+    margin-right:1%;
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="welcome" class="col-md-5">
+      <h1>Welcome <span id="subtitle">to the Brothers House</span></h1>
+      <form action="/login/" method="post">
+        {% csrf_token %}
+
+        <input class="form-control" type="text" name="username" value="{{ username }}" placeholder="Name" autofocus/>
+
+        <input class="form-control" type="password" name="password" value="" placeholder="Password"/>
+
+        <div class="row">
+          <input id="login" name="login" class="btn btn-success btn-lg col-md-1" type="submit" value="Log In" data-toggle="tooltip" data-original-title="{{ state }}" data-placement="left" data-trigger="" />
+          <input id="join" name="join" class="btn btn-primary btn-lg col-md-1" type="submit" value="Join" />
+        </div>
+      </form>
+    </div>
+  </div>
+    
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+  <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+  <script>
+  $(document).ready(function() {
+    $('#login').tooltip('show');
+  });
+  </script>
+</body>
+</html>
