@@ -1,0 +1,4 @@
+This app is my first Django project. 
+
+Downloading: `sudo apt-get install python-django', 
+Right now, it contains several views for authentication, entering a payment, and creating a house account.
