@@ -22,11 +22,10 @@ class Payment(models.Model):
   description = models.CharField(max_length=160)
   date_purchased = models.DateTimeField('date purchased')
   date_entered = models.DateTimeField('date entered')
-  houseaccount = models.ForeignKey(HouseAccount)
 
   def __unicode__(self):
     return '$' + str(self.amount) + ' by ' + str(self.brother) + ' on ' + \
-           self.date_purchased.strftime('%Y-%m-%d')
+           self.date_purchased.strftime('%B %d, %Y')
 
 class PaymentDue(models.Model):
   payer = models.ForeignKey(Brother, related_name='payment_due_payer')

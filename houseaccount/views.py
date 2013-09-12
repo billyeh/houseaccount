@@ -96,17 +96,30 @@ def landing_page(request):
 
 def create_house_account(request):
   template = loader.get_template('create-house-account.html')
-  startdate = enddate = datetime.date.today()
-  _accounts = HouseAccount.objects.order_by('-date_created')
-  if _dates:
-    startdate = _accounts[0].created_date
-  context = RequestContext(request, {'startdate':startdate,'enddate':datetime.date.today(),
-                                    'brothers':Brother.objects.all()})
+  enddate = datetime.date.today()
+  startdate = _get_last_house_account().date_created.strftime('%B %d, %Y')
+
+  context = RequestContext(request, {'startdate':startdate if startdate else enddate,
+                                    'enddate':enddate,'brothers':Brother.objects.all()})
   return HttpResponse(template.render(context))
 
 def submit_house_account(request):
+  template = loader.get_template('submit-house-account.html')
+  state = ''
+  proportions = {}
+  payments = []
+
   if not request.POST:
     return HttpResponse('No form values were entered.')
+  else:
+    try:
+      proportions = _get_proportions(request)
+    except Exception as e:
+      state = 'Invalid proportion input'
+    payments = Payment.objects.filter(date_entered__gt=_get_last_house_account().date_created)
+
+  context = RequestContext(request, {'state':state})
+  return HttpResponse(template.render(context))
 
 # Private methods
 
@@ -128,3 +141,17 @@ def _validate_amount(amount):
   except:
     return (None, message)
   return (amt, '')
+
+def _get_proportions(request):
+  proportions = {}
+  if Brother.objects.all():
+    for brother in Brother.objects.all():
+      proportions[brother.name] = float(str(request.POST.get(brother.name)))
+
+def _get_last_house_account():
+  accounts = HouseAccount.objects.order_by('-date_created')
+  if accounts:
+    return accounts[0]
+
+def _generate_house_account(payments, proportions):
+  return HouseAccount()

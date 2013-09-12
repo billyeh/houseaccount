@@ -1,5 +1,4 @@
-from brothers.models import Brother
-from brothers.models import Payment
+from brothers.models import Brother, HouseAccount, Payment, PaymentDue
 from django.contrib import admin
 
 class PaymentInline(admin.TabularInline):
@@ -17,3 +16,5 @@ class BrotherAdmin(admin.ModelAdmin):
 
 admin.site.register(Brother, BrotherAdmin)
 admin.site.register(Payment)
+admin.site.register(HouseAccount)
+admin.site.register(PaymentDue)

@@ -65,26 +65,24 @@
     <span class="info">Hello, {{ user.username }}. <a href="/logout">Logout</a></span>
     <div class="container">
       <div id="welcome" class="col-md-5">
-        <h1><span id="subtitle">What proportion of time has each brother been here from {{ startdate }} to today?</span></h1>
-        <form class="form-horizontal" action="/submit-house-account/" method="post" role="form">
+        <h1><span id="subtitle">Submit house account</span></h1>
           {% csrf_token %}
 
           {% for brother in brothers %}
-            <div class="form-group">
-              <label for="{{brother}}" class="col-lg-2 control-label">{{brother}}</label>
-              <div class="col-lg-10">
-                <input type="text" class="form-control" id="{{brother}}" name="{{brother}}" placeholder="Number from 0 to 1" value="1" data-toggle="tooltip" data-original-title="Number from 0 to 1" data-placement="right" data-trigger="focus">
-              </div>
-            </div>
+
           {% endfor %}
 
-          <input id="submit" name="payment" class="btn btn-success btn-lg" type="submit" value="Submit" />
-        </form>
+          {{ state }}
       </div>
     </div>
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+    <script>
+    $(document).ready(function() {
+      $('.form-control').tooltip({})
+    });
+    </script>
 
   </body>
   </html>
