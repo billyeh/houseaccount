@@ -13,6 +13,7 @@ urlpatterns = patterns('',
     url(r'^welcome/', 'houseaccount.views.landing_page'),
     url(r'^payments/', 'houseaccount.views.enter_payment'),
     url(r'^create-house-account/', 'houseaccount.views.create_house_account'),
+    url(r'^submit-house-account/', 'houseaccount.views.submit_house_account'),
     # url(r'^houseaccount/', include('houseaccount.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

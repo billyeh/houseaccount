@@ -66,7 +66,7 @@
     <div class="container">
       <div id="welcome" class="col-md-5">
         <h1><span id="subtitle">What proportion of time has each brother been here from {{ startdate }} to {{ enddate }}?</span></h1>
-        <form class="form-horizontal" action="/payments/" method="post" role="form">
+        <form class="form-horizontal" action="/submit-house-account/" method="post" role="form">
           {% csrf_token %}
 
           {% for brother in brothers %}

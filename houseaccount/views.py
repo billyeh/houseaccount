@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.shortcuts import redirect
-from brothers.models import Brother, Payment
+from brothers.models import Brother, Payment, PaymentDue, HouseAccount
 import datetime
 
 # Request handlers
@@ -96,9 +96,17 @@ def landing_page(request):
 
 def create_house_account(request):
   template = loader.get_template('create-house-account.html')
-  context = RequestContext(request, {'startdate':datetime.date.today(),'enddate':datetime.date.today(),
+  startdate = enddate = datetime.date.today()
+  _accounts = HouseAccount.objects.order_by('-date_created')
+  if _dates:
+    startdate = _accounts[0].created_date
+  context = RequestContext(request, {'startdate':startdate,'enddate':datetime.date.today(),
                                     'brothers':Brother.objects.all()})
   return HttpResponse(template.render(context))
+
+def submit_house_account(request):
+  if not request.POST:
+    return HttpResponse('No form values were entered.')
 
 # Private methods
 
