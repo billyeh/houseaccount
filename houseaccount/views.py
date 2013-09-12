@@ -96,18 +96,18 @@ def landing_page(request):
 
 def create_house_account(request):
   template = loader.get_template('create-house-account.html')
-  enddate = datetime.date.today()
-  startdate = _get_last_house_account().date_created.strftime('%B %d, %Y')
+  startdate = _get_first_date().strftime('%B %d, %Y')
 
   context = RequestContext(request, {'startdate':startdate if startdate else enddate,
-                                    'enddate':enddate,'brothers':Brother.objects.all()})
+                                    'brothers':Brother.objects.all()})
   return HttpResponse(template.render(context))
 
 def submit_house_account(request):
   template = loader.get_template('submit-house-account.html')
   state = ''
   proportions = {}
-  payments = []
+  payments = payments_due = []
+
 
   if not request.POST:
     return HttpResponse('No form values were entered.')
@@ -116,9 +116,10 @@ def submit_house_account(request):
       proportions = _get_proportions(request)
     except Exception as e:
       state = 'Invalid proportion input'
-    payments = Payment.objects.filter(date_entered__gt=_get_last_house_account().date_created)
+    payments = Payment.objects.filter(date_entered__gt=_get_first_date())
+    payments_due = _generate_payments_due(payments, proportions)
 
-  context = RequestContext(request, {'state':state})
+  context = RequestContext(request, {'state':state,'payments_due':payments_due})
   return HttpResponse(template.render(context))
 
 # Private methods
@@ -148,10 +149,16 @@ def _get_proportions(request):
     for brother in Brother.objects.all():
       proportions[brother.name] = float(str(request.POST.get(brother.name)))
 
-def _get_last_house_account():
+def _get_first_date():
   accounts = HouseAccount.objects.order_by('-date_created')
   if accounts:
-    return accounts[0]
+    return accounts[0].date_created
+  payments = Payment.objects.order_by('-date_created')
+  if payments:
+    return payments[0].date_entered
+  else:
+    return timezone.now()
 
-def _generate_house_account(payments, proportions):
-  return HouseAccount()
+def _generate_payments_due(payments, proportions):
+  payments_due = []
+  return payments_due
