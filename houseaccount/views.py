@@ -193,4 +193,6 @@ def _generate_payments_due(payments, proportions):
   # Now, each person who owed money has paid the person who was owed the most.
   # Recursively, he should pay the person owed next most his excess, 
   # and that person the next most, and so on.
+
+  # Don't forget to save all the PaymentDue objects to the database!
   return amount_due_per_brother
