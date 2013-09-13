@@ -75,7 +75,8 @@ def enter_payment(request):
       success = False
 
   if request.POST and success:
-    state = 'Congratulations! You entered a payment of ' + amount + '. Place your receipt in Ruiyu\'s folder'
+    state = 'Congratulations! You entered a payment of ' + amount + \
+            '. Place your receipt in Ruiyu\'s folder'
     brother = Brother.objects.filter(user=request.user)[0]
     payment = Payment(brother=brother,amount=amt,description=desc,
                       date_purchased=date_purchased,date_entered=datetime.date.today())
@@ -107,7 +108,6 @@ def submit_house_account(request):
   state = ''
   proportions = {}
   payments = payments_due = []
-
 
   if not request.POST:
     return HttpResponse('No form values were entered.')
@@ -148,6 +148,7 @@ def _get_proportions(request):
   if Brother.objects.all():
     for brother in Brother.objects.all():
       proportions[brother.name] = float(str(request.POST.get(brother.name)))
+  return proportions
 
 def _get_first_date():
   accounts = HouseAccount.objects.order_by('-date_created')
@@ -160,5 +161,36 @@ def _get_first_date():
     return timezone.now()
 
 def _generate_payments_due(payments, proportions):
+  houseaccount = HouseAccount(date_created=timezone.now())
   payments_due = []
-  return payments_due
+  total_spent = sum([payment.amount for payment in payments])
+  total_divided_equally = 0
+  least_due = None
+  bros_due_payment = []
+  amount_due_per_brother = {}
+
+  for brother in proportions:
+    total_divided_equally = proportions[brother] * float(total_spent) / len(proportions)
+    amount_due_per_brother[brother] = total_divided_equally
+    amt = [payment.amount for payment in payments if payment.brother.name == brother]
+    amount_due_per_brother[brother] -= float(sum(amt))
+    amount_due_per_brother[brother] = round(amount_due_per_brother[brother], 2)
+    if least_due is None or amount_due_per_brother[brother] < least_due:
+      bro_with_least_due = brother
+  brother_with_least_due = Brother.objects.filter(name=bro_with_least_due)[0]
+
+  # By now, we have how much everyone is owed and how much everyone owes, and
+  # those who owe the account pay the one who is owed the most
+  for brother in amount_due_per_brother:
+    payer = Brother.objects.filter(name=brother)[0]
+    if amount_due_per_brother[brother] > 0:
+      payment_due = PaymentDue(payer=payer,payee=brother_with_least_due,
+                              houseaccount=houseaccount,amount=amount_due_per_brother[brother])
+      payments_due += [payment_due]
+      amount_due_per_brother[bro_with_least_due] += amount_due_per_brother[brother]
+      amount_due_per_brother[brother] -= amount_due_per_brother[brother]
+
+  # Now, each person who owed money has paid the person who was owed the most.
+  # Recursively, he should pay the person owed next most his excess, 
+  # and that person the next most, and so on.
+  return amount_due_per_brother
