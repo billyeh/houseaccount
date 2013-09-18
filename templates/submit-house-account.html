@@ -59,16 +59,28 @@
       padding-top:15px !important;
       text-align:left !important;
     }
+    .brand {
+      font-size:20px;
+      font-weight:bold;
+      color:rgb(245, 245, 245);
+      position:fixed;
+      top:10px;
+      left:10px;
+      font-size:20px;
+    }
     </style>
   </head>
   <body>
+    <span class="brand"><a href="/">BroHo</a></span>
     <span class="info">Hello, {{ user.username }}. <a href="/logout">Logout</a></span>
     <div class="container">
       <div id="welcome" class="col-md-5">
-        <h1><span id="subtitle">Submit house account</span></h1>
+        <h1><span id="subtitle">Submitted house account</span></h1>
           {% csrf_token %}
 
-          {{ payments_due }}
+          {% for payment_due in payments_due %}
+          {{ payment_due }}
+          {% endfor %}
 
           {{ state }}
       </div>
@@ -76,11 +88,6 @@
 
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
-    <script>
-    $(document).ready(function() {
-      $('.form-control').tooltip({})
-    });
-    </script>
 
   </body>
   </html>

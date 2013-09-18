@@ -59,9 +59,19 @@
       padding-top:15px !important;
       text-align:left !important;
     }
+    .brand {
+      font-size:20px;
+      font-weight:bold;
+      color:rgb(245, 245, 245);
+      position:fixed;
+      top:10px;
+      left:10px;
+      font-size:20px;
+    }
     </style>
   </head>
   <body>
+    <span class="brand"><a href="/">BroHo</a></span>
     <span class="info">Hello, {{ user.username }}. <a href="/logout">Logout</a></span>
     <div class="container">
       <div id="welcome" class="col-md-5">

@@ -139,6 +139,7 @@ def submit_house_account(request):
     for payment_due in payments_due:
       payment_due.save()
   else:
+    state = 'No payments since last house account.'
     account.delete()
 
   context = RequestContext(request, {'state':state,'payments_due':payments_due,
