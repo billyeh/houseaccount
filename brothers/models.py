@@ -16,6 +16,11 @@ class HouseAccount(models.Model):
   def __unicode__(self):
     return str(self.date_created if self.date_created else 'No date') + ' house account'
 
+  @staticmethod
+  def first_house_account():
+    if HouseAccount.objects.all():
+      return HouseAccount.objects.order_by('-date_created')[0].date_created
+
 class Payment(models.Model):
   brother = models.ForeignKey(Brother)
   amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -26,6 +31,11 @@ class Payment(models.Model):
   def __unicode__(self):
     return '$' + str(self.amount) + ' by ' + str(self.brother) + ' on ' + \
            self.date_purchased.strftime('%B %d, %Y')
+
+  @staticmethod
+  def first_payment():
+    if Payment.objects.all():
+      return Payment.objects.order_by('date_entered')[0].date_entered
 
 class PaymentDue(models.Model):
   payer = models.ForeignKey(Brother, related_name='payment_due_payer')

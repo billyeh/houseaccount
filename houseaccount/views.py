@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.shortcuts import redirect
 from brothers.models import Brother, Payment, PaymentDue, HouseAccount
-import datetime
+import datetime, traceback
 
 # Request handlers
 
@@ -53,7 +53,7 @@ def login_user(request):
   if success and request.user.is_authenticated():
     return redirect('/welcome')
 
-  context = RequestContext(request, {'state':state, 'username':username, 'success':success})
+  context = RequestContext(request, {'state':state, 'username':username})
   return HttpResponse(template.render(context))
 
 def enter_payment(request):
@@ -82,8 +82,8 @@ def enter_payment(request):
                       date_purchased=date_purchased,date_entered=timezone.now())
     payment.save()
 
-  context = RequestContext(request, {'state':state,'success':success,
-                                    'datepurchased':date,'amount':amount,'description':desc})
+  context = RequestContext(request, {'state':state,'datepurchased':date,
+                                    'amount':amount,'description':desc})
   return HttpResponse(template.render(context))
 
 def logout_user(request):
@@ -99,51 +99,17 @@ def create_house_account(request):
   template = loader.get_template('create-house-account.html')
   startdate = _get_first_date().strftime('%B %d, %Y')
 
-  context = RequestContext(request, {'startdate':startdate if startdate else enddate,
+  context = RequestContext(request, {'startdate':startdate,
                                     'brothers':Brother.objects.all()})
   return HttpResponse(template.render(context))
 
 def submit_house_account(request):
-  """
   template = loader.get_template('submit-house-account.html')
-  payments = Payment.objects.filter(date_entered__gte=_get_first_date())
+  payments_due = []
   proportions = _get_proportions(request)
-  payments_due = _calculate_average_payment(payments, proportions)
-  context = RequestContext(request, {'state':'','payments_due':payments})
-  return HttpResponse(template.render(context))
-  """
-  template = loader.get_template('submit-house-account.html')
-  state = ''
-  proportions = amount_due_per_brother = {}
-  payments = payments_due = []
-  success = True
+  success = False
 
-  if not request.POST:
-    return HttpResponse('No form values were entered.')
-  else:
-    try:
-      proportions = _get_proportions(request)
-    except Exception as e:
-      state = 'Invalid proportion input'
-    try:
-      payments = Payment.objects.filter(date_entered__gt=_get_first_date())
-      payments_due, amount_due_per_brother, account = \
-                _generate_payments(payments, proportions)
-    except Exception as e:
-      state = e
-
-  for bro in amount_due_per_brother:
-    if amount_due_per_brother[bro] != 0:
-      success = False
-  if success and payments_due:
-    for payment_due in payments_due:
-      payment_due.save()
-  else:
-    state = 'No payments since last house account.'
-    account.delete()
-
-  context = RequestContext(request, {'state':state,'payments_due':payments_due,
-                                    'success':success})
+  context = RequestContext(request, {'state':state,'payments_due':payments_due})
   return HttpResponse(template.render(context))
 
 # Private methods
@@ -175,74 +141,10 @@ def _get_proportions(request):
   return proportions
 
 def _get_first_date():
-  accounts = HouseAccount.objects.order_by('date_created')
-  payments = Payment.objects.order_by('date_entered')
-  if accounts:
-    return accounts[0].date_created
-  elif payments:
-    return payments[0].date_entered
-  else:
-    return timezone.now()
-
-def _get_bro_with_least_due(amount_due_per_brother):
-  bro_with_least_due = None
-  minimum = 0
-  for brother in amount_due_per_brother:
-    if bro_with_least_due == None or amount_due_per_brother[brother] < minimum:
-      bro_with_least_due = brother
-      minimum = amount_due_per_brother[brother]
-  return bro_with_least_due
-
-def _calculate_average_payment(payments, proportions):
-  total_spent = sum([payment.amount for payment in payments])
-  return float(total_spent / len(proportions))
-
-def _generate_payments(payments, proportions):
-  houseaccount = HouseAccount(date_created=timezone.now())
-  houseaccount.save()
-  payments_due = bros_due_payment = []
-  total_spent = sum([payment.amount for payment in payments])
-  total_divided_equally = 0
-  amount_due_per_brother = {}
-
-  for brother in proportions:
-    total_divided_equally = proportions[brother] * float(total_spent) / len(proportions)
-    amount_due_per_brother[brother] = total_divided_equally
-    amt = [payment.amount for payment in payments if payment.brother.name == brother]
-    amount_due_per_brother[brother] -= float(sum(amt))
-    amount_due_per_brother[brother] = round(amount_due_per_brother[brother], 2)
-  
-  bro_with_least_due = _get_bro_with_least_due(amount_due_per_brother)
-  brother_with_least_due = Brother.objects.filter(name=bro_with_least_due)[0]
-
-  # By now, we have how much everyone is owed and how much everyone owes, and
-  # those who owe the account pay the one with the least due
-  for brother in amount_due_per_brother:
-    payer = Brother.objects.filter(name=brother)[0]
-    if amount_due_per_brother[brother] > 0:
-      payment_due = PaymentDue(payer=payer,payee=brother_with_least_due,
-                              houseaccount=houseaccount,
-                              amount=amount_due_per_brother[brother])
-      payments_due += [payment_due]
-      amount_due_per_brother[bro_with_least_due] += amount_due_per_brother[brother]
-      amount_due_per_brother[brother] -= amount_due_per_brother[brother]
-  
-  # Now, each person who owed money has paid the person who was owed the most.
-  # Recursively, he should pay the person owed next most his excess, 
-  # and that person the next most, and so on. Yay, recursion!
-  def pay_next_person(amount_due_per_brother, payments_due, houseaccount):
-    bro_with_least_due = _get_bro_with_least_due(amount_due_per_brother)
-    brother_with_least_due = Brother.objects.filter(name=bro_with_least_due)[0]
-    if amount_due_per_brother[bro_with_least_due] < 0:
-      for brother in amount_due_per_brother:
-        payer = Brother.objects.filter(name=brother)[0]
-        if amount_due_per_brother[brother] > 0:
-          payment_due = PaymentDue(payer=payer,payee=brother_with_least_due,
-                                  houseaccount=houseaccount,
-                                  amount=amount_due_per_brother[brother])
-          payments_due += [payment_due]
-          amount_due_per_brother[bro_with_least_due] += amount_due_per_brother[brother]
-          amount_due_per_brother[brother] -= amount_due_per_brother[brother]
-    return (payments_due, amount_due_per_brother, houseaccount)
-
-  return pay_next_person(amount_due_per_brother, payments_due, houseaccount)
+  account = HouseAccount.first_house_account()
+  payment = Payment.first_payment()
+  if account:
+    return account
+  elif payment:
+    return payment
+  return datetime.date.today()
