@@ -105,9 +105,9 @@ def create_house_account(request):
 
 def submit_house_account(request):
   template = loader.get_template('submit-house-account.html')
-  payments_due = []
-  proportions = _get_proportions(request)
+  payments_due = create_payments(request)
   success = False
+  state = ''
 
   context = RequestContext(request, {'state':state,'payments_due':payments_due})
   return HttpResponse(template.render(context))
@@ -148,3 +148,11 @@ def _get_first_date():
   elif payment:
     return payment
   return datetime.date.today()
+
+def create_payments(request):
+  proportions = _get_proportions(request)
+  payments = Payment.get_payments_after(_get_first_date())
+  if not payments:
+    return []
+
+  return []
