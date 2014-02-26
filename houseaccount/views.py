@@ -105,11 +105,15 @@ def create_house_account(request):
 
 def submit_house_account(request):
   template = loader.get_template('submit-house-account.html')
-  payments_due = create_payments(request)
-  success = False
-  state = ''
+  account = HouseAccount(date_created=datetime.date.today().strftime('%Y-%m-%d'))
+  payments_due = _create_payments(request)
 
-  context = RequestContext(request, {'state':state,'payments_due':payments_due})
+  account.save()
+  for payment_due in payments_due:
+    payment_due.houseaccount = account
+    payment_due.save()
+
+  context = RequestContext(request, {'payments_due':payments_due})
   return HttpResponse(template.render(context))
 
 # Private methods
@@ -133,13 +137,6 @@ def _validate_amount(amount):
     return (None, message)
   return (amt, '')
 
-def _get_proportions(request):
-  proportions = {}
-  if Brother.objects.all():
-    for brother in Brother.objects.all():
-      proportions[brother.name] = float(str(request.POST.get(brother.name)))
-  return proportions
-
 def _get_first_date():
   account = HouseAccount.first_house_account()
   payment = Payment.first_payment()
@@ -149,10 +146,73 @@ def _get_first_date():
     return payment
   return datetime.date.today()
 
-def create_payments(request):
+def _create_payments(request):
   proportions = _get_proportions(request)
   payments = Payment.get_payments_after(_get_first_date())
   if not payments:
     return []
 
-  return []
+  bros_owe = _get_amount_owed(payments, proportions)
+  for payment in payments:
+    bros_owe[payment.brother.name] -= float(payment.amount)
+  payments_due = _distribute_payments(bros_owe)
+  print(payments_due)
+  return payments_due
+
+def _get_proportions(request):
+  proportions = {}
+  if Brother.objects.all():
+    for brother in Brother.objects.all():
+      proportions[brother.name] = float(str(request.POST.get(brother.name)))
+  return proportions
+
+def _get_amount_owed(payments, proportions):
+  bros_owe = {}
+  for bro in Brother.objects.all():
+    bros_owe[bro.name] = 0
+  for payment in payments:
+    bros_owe = _distribute_cost(payment.amount, bros_owe, '')
+  for bro in bros_owe:
+    bros_owe = _distribute_cost(float(bros_owe[bro]) * (1 - proportions[bro]), bros_owe, bro)
+    bros_owe[bro] = bros_owe[bro] * proportions[bro]
+  return bros_owe
+
+def _distribute_cost(payment, bros_owe, except_bro):
+  portion = payment / len(bros_owe)
+  for bro in bros_owe:
+    if bro != except_bro:
+      bros_owe[bro] += float(portion)
+  return bros_owe
+
+def _distribute_payments(bros_owe):
+  payments_due = []
+
+  # First round: everyone pays the person owed the most
+  bro_owed_most = sorted(bros_owe.items(), key=lambda x: x[1])[0][0]
+  for bro in bros_owe:
+    if bros_owe[bro] <= 0:
+      continue
+    paying_brother = Brother.objects.filter(name=bro)[0]
+    payee_brother = Brother.objects.filter(name=bro_owed_most)[0]
+    payments_due.append(PaymentDue(payer=paying_brother, payee=payee_brother,
+                                   amount=round(bros_owe[bro], 2)))
+    bros_owe[bro_owed_most] += bros_owe[bro]
+    bros_owe[bro] = 0
+
+  # Second round: person paid now pays everyone who still needs payment
+  for bro in bros_owe:
+    if bros_owe[bro] >= 0:
+      continue
+    paying_brother = Brother.objects.filter(name=bro_owed_most)[0]
+    payee_brother = Brother.objects.filter(name=bro)[0]
+    payments_due.append(PaymentDue(payer=paying_brother, payee=payee_brother,
+                                   amount=round(bros_owe[bro], 2)))
+    bros_owe[bro_owed_most] += bros_owe[bro]
+    bros_owe[bro] = 0
+  _round_amounts(bros_owe)
+
+  return payments_due
+
+def _round_amounts(bros_owe):
+  for bro in bros_owe:
+    bros_owe[bro] = round(bros_owe[bro], 2)

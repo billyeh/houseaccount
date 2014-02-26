@@ -40,7 +40,7 @@ class Payment(models.Model):
   @staticmethod
   def get_payments_after(date):
     if Payment.objects.all():
-      return Payment.objects.filter(date_entered__gt=date)
+      return Payment.objects.filter(date_entered__gte=date)
 
 class PaymentDue(models.Model):
   payer = models.ForeignKey(Brother, related_name='payment_due_payer')

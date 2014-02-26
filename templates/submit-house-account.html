@@ -77,9 +77,11 @@
       <div id="welcome" class="col-md-5">
         <h1><span id="subtitle">Submitted house account</span></h1>
           {% csrf_token %}
-
+          {% if not payments_due %}
+            There are no payments to be made for this house account.
+          {% endif %}
           {% for payment_due in payments_due %}
-          {{ payment_due }}
+            {{ payment_due }}
           {% endfor %}
 
           {{ state }}
